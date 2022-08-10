@@ -3,31 +3,32 @@ import java.util.Arrays;
 
 public class FileMerge {
 
-    //Метод отвечает за проверку входных данных (ключей, файлов и т.п.)
+    //Метод отвечает за проверку входных данных (ключей, файлов и т.п.) и запуск основного алгоритма
     public static void mergeStart(String ... args) {
 
         String[] filesInput; //Отдельный массив для входных файлов
 
-        //Проверка на кол-во параметров (1-2 ключа, входные/входной и выходной файлы)
+        //Проверка на кол-во параметров
         if (args.length == 0) {
             System.out.println("Пустая командная строка");
+            return;
         }
 
-        if (args[0].matches("-[ad]")) { //Проверяет ключ -a или -d
+        if (args[0].matches("-[ad]")) { //Проверяем ключ: -a или -d
 
-            if (args[1].matches("-[is]")) { //Проверяем ключ -i или -s
+            if (args[1].matches("-[is]")) { //Проверяем ключ: -i или -s
                 filesInput = Arrays.copyOfRange(args, 3, args.length);
                 merge(args[0].charAt(1), args[1].charAt(1), args[2], filesInput);
 
             } else {
-                System.out.println("Неправильный ключ типа файла (int/String)");
+                System.out.println("Неправильный ключ типа файла (int/String)\n");
             }
 
         } else if (args[1].matches("[^-].*")) { //Если ключа нет (необязательный ключ), то ставим ключ -a по умолчанию
                 filesInput = Arrays.copyOfRange(args, 2, args.length);
                 merge('a', args[0].charAt(1), args[1], filesInput);
         } else {
-            System.out.println("Неправильный ключ порядка сортировки");
+            System.out.println("Неправильный ключ порядка сортировки\n");
         }
     }
 
@@ -44,7 +45,8 @@ public class FileMerge {
         BufferedReader[] fileReader = null; //Массив входных файлов
         File directory = new File("");
 
-        try(BufferedWriter fileWriter = new BufferedWriter(new FileWriter(directory.getAbsolutePath() + "/" + fileOutput))) { //Указываем выходной файл
+        //Указываем выходной файл
+        try(BufferedWriter fileWriter = new BufferedWriter(new FileWriter(directory.getAbsolutePath() + "/" + fileOutput))) {
 
             //Открываем все входные файлы для чтения
             fileReader = new BufferedReader[filesNum];
@@ -55,15 +57,14 @@ public class FileMerge {
             //Записываем в массив по первому символу из каждого входного файла
             String[] symbols = new String[filesNum];
             for (int i = 0; i < filesNum; i++) {
-                symbols[i] = fileReader[i].readLine();
+                symbols[i] = fileReader[i].readLine(); //Считываем как строку, в случае ключа -i сделаем преобразование
             }
 
-            String min, lastMin = null; //min - служит для поиска минимальных элементов, lastMin - предыдущий элемент
-            int index = -1; //Индекс файла, откуда взят минимальный элемент
+            String min, lastMin = null; //min - используется для минимальной строки, lastMin - используется для проверки порядка сортировки в файлах
+            int index = -1; //Индекс файла, откуда взята минимальная строка
 
             //Вторая фаза merge sort - слияние файлов в один
             while (true) {
-
                 min = null;
 
                 //Находим первый доступный элемент, указываем его в качестве минимального
@@ -74,12 +75,12 @@ public class FileMerge {
                     }
                 }
 
-                //Проверка - есть ли ещё файлы, которые не достигли конца (min должен содержать какую-либо строку)
+                //Проверяем min: если все входные файлы подошли к концу, то min должно быть равно null, выходим из цикла
                 if (min == null) {
                     break;
                 }
 
-                //Цикл находит минимальный элемент по массиву символов
+                //Цикл находит минимальный элемент в массиве строк
                 for (int i = 0; i < filesNum; i++) {
 
                     //Блок try-catch позволяет отловить тот случай, когда в файле с int данными встречается какой-либо другой тип
@@ -90,35 +91,36 @@ public class FileMerge {
                         }
                     }
                     catch (NumberFormatException exc) {
-                        System.out.println("В файле находится строка неправильного типа:\nИмя файла: " + filesInput[i] + ", строка: " + symbols[i]);
-                        symbols[i] = fileReader[i--].readLine(); //Пропускаем элемент - переходим к следующему. "i--" - для повторной проверки из того же файла
+                        System.out.println(symbols[i]);
+                        symbols[i] = fileReader[i--].readLine(); //При ошибке - пропускаем строку и переходим к следующей, уменьшив i на 1
                     }
                 }
 
-                //Если выбранное значение не соответсвует порядку сортировки - пропускаем элемент, переходим к следующему
+                //Если выбранная строка не соответсвует порядку сортировки (сравниваем с lastMin) - пропускаем её, переходим к следующей
                 if (lastMin != null && comparing(key1, key2, lastMin, min)) {
                     symbols[index] = fileReader[index].readLine();
                     continue;
                 }
 
-                //Если выбранная строка содержит пробелы, то она - ошибочная, её необходимо убрать
+                //Если выбранная строка (ключ -s) содержит пробелы, то она - ошибочная, её необходимо убрать
                 if (key2 == 's' && min.matches(".*\\s.*")) {
                     symbols[index] = fileReader[index].readLine();
                     continue;
                 }
 
-                fileWriter.write(min); //Записываем минимальный элемент в выходной файл
+                fileWriter.write(min); //Записываем минимальную строку в выходной файл
                 fileWriter.write('\n');
                 lastMin = min;
-                symbols[index] = fileReader[index].readLine(); //Считываем следующий элемент из файла
+                symbols[index] = fileReader[index].readLine(); //Считываем следующую строку из файла
             }
 
         }
+
         catch (IOException exc) {
-            System.out.println("Ошибка ввода-вывода:\n" + exc.toString());
+            System.out.println("Ошибка ввода-вывода:\n" + exc.toString() + "\n");
         }
         catch (ArrayIndexOutOfBoundsException exc) {
-            System.out.println("Выход за границы массива:\n" + exc.toString());
+            System.out.println("Выход за границы массива:\n" + exc.toString() + "\n");
         }
         finally {
 
@@ -128,13 +130,13 @@ public class FileMerge {
                 }
             }
             catch (NullPointerException exc) {
-                System.out.println("Попытка закрыть объект null:\n" + exc.toString());
+                System.out.println("Попытка закрыть объект null:\n" + exc.toString() + "\n");
             }
             catch (ArrayIndexOutOfBoundsException exc) {
-                System.out.println("Выход за границы массива:\n" + exc.toString());
+                System.out.println("Выход за границы массива:\n" + exc.toString() + "\n");
             }
             catch (IOException exc) {
-                System.out.println("Ошибка ввода-вывода:\n" + exc.toString());
+                System.out.println("Ошибка ввода-вывода:\n" + exc.toString() + "");
             }
         }
     }
@@ -143,7 +145,7 @@ public class FileMerge {
     private static boolean comparing(char key1, char key2, String s1, String s2) throws NumberFormatException {
 
         switch (key2) {
-            case 'i': //Для int
+            case 'i': //Для int - преобразовываем строку в Integer
                 switch (key1) {
                     case 'a':
                         return Integer.parseInt(s1) > Integer.parseInt(s2);
@@ -153,7 +155,7 @@ public class FileMerge {
                         return false;
                 }
 
-            case 's': //Для String
+            case 's': //Для String - сравниваем через compareTo()
                 switch (key1) {
                     case 'a':
                         return s1.compareTo(s2) > 0;
