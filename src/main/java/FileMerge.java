@@ -91,7 +91,6 @@ public class FileMerge {
                         }
                     }
                     catch (NumberFormatException exc) {
-                        System.out.println(symbols[i]);
                         symbols[i] = fileReader[i--].readLine(); //При ошибке - пропускаем строку и переходим к следующей, уменьшив i на 1
                     }
                 }
