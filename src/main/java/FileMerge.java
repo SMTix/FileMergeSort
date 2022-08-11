@@ -78,6 +78,7 @@ public class FileMerge {
                     if (symbols[i] != null) {
                         min = symbols[i];
                         index = i;
+                        break;
                     }
                 }
 
@@ -99,7 +100,12 @@ public class FileMerge {
                 }
 
                 //Если выбранная строка не соответсвует порядку сортировки (сравниваем с lastMin) - пропускаем её, переходим к следующей
-                if (lastMin != null && comparing(key1, key2, lastMin, min)) {
+                try {
+                    if (lastMin != null && comparing(key1, key2, lastMin, min)) {
+                        symbols[index] = fileReader[index].readLine();
+                        continue;
+                    }
+                } catch (NumberFormatException exc) { //Если min содержит неправильный формат (для int), то также пропускаем строку
                     symbols[index] = fileReader[index].readLine();
                     continue;
                 }
