@@ -14,17 +14,16 @@ public class FileMerge {
             return;
         }
 
-        if (args[0].matches("-[ad]")) { //Проверяем ключ: -a или -d
+        if (args[0].matches("-[ad]")) { //Проверяем ключ: '-a' или '-d'
 
             if (args[1].matches("-[is]")) { //Проверяем ключ: -i или -s
                 filesInput = Arrays.copyOfRange(args, 3, args.length);
                 merge(args[0].charAt(1), args[1].charAt(1), args[2], filesInput);
-
             } else {
                 System.out.println("Неправильный ключ типа файла (int/String)\n");
             }
 
-        } else if (args[1].matches("[^-].*")) { //Если ключа нет (необязательный ключ), то ставим ключ -a по умолчанию
+        } else if (args[1].matches("[^-].*")) { //Если ключа нет (необязательный ключ), то ставим ключ '-a' по умолчанию
                 filesInput = Arrays.copyOfRange(args, 2, args.length);
                 merge('a', args[0].charAt(1), args[1], filesInput);
         } else {
@@ -57,7 +56,14 @@ public class FileMerge {
             //Записываем в массив по первому символу из каждого входного файла
             String[] symbols = new String[filesNum];
             for (int i = 0; i < filesNum; i++) {
-                symbols[i] = fileReader[i].readLine(); //Считываем как строку, в случае ключа -i сделаем преобразование
+                symbols[i] = fileReader[i].readLine(); //Считываем строку
+                if (symbols[i] != null && key2 == 'i') { //Для типа integer: проверяем тип данных, пока не найдем нужный
+                    try {
+                        Integer.parseInt(symbols[i]);
+                    } catch (NumberFormatException exc) {
+                        i--; //В случае ошибки - вновь считываем из того же потока
+                    }
+                }
             }
 
             String min, lastMin = null; //min - используется для минимальной строки, lastMin - используется для проверки порядка сортировки в файлах
@@ -82,15 +88,12 @@ public class FileMerge {
 
                 //Цикл находит минимальный элемент в массиве строк
                 for (int i = 0; i < filesNum; i++) {
-
-                    //Блок try-catch позволяет отловить тот случай, когда в файле с int данными встречается какой-либо другой тип
-                    try {
+                    try { //Блок try-catch позволяет отловить тот случай, когда в файле с int данными встречается какой-либо другой тип
                         if (symbols[i] != null && comparing(key1, key2, min, symbols[i])) {
                             min = symbols[i];
                             index = i;
                         }
-                    }
-                    catch (NumberFormatException exc) {
+                    } catch (NumberFormatException exc) {
                         symbols[i] = fileReader[i--].readLine(); //При ошибке - пропускаем строку и переходим к следующей, уменьшив i на 1
                     }
                 }
@@ -113,28 +116,24 @@ public class FileMerge {
                 symbols[index] = fileReader[index].readLine(); //Считываем следующую строку из файла
             }
 
-        }
-
-        catch (IOException exc) {
-            System.out.println("Ошибка ввода-вывода:\n" + exc.toString() + "\n");
-        }
-        catch (ArrayIndexOutOfBoundsException exc) {
+        } catch (ArrayIndexOutOfBoundsException exc) {
             System.out.println("Выход за границы массива:\n" + exc.toString() + "\n");
-        }
-        finally {
+        } catch (IOException exc) {
+            System.out.println("Ошибка ввода-вывода:\n" + exc.toString() + "\n");
+        } finally {
 
+            //Закрываем потоки данных
             try {
                 for (int i = 0; i < filesNum; i++) {
-                    fileReader[i].close();
+                    if (fileReader[i] != null) {
+                        fileReader[i].close();
+                    }
                 }
-            }
-            catch (NullPointerException exc) {
+            } catch (NullPointerException exc) {
                 System.out.println("Попытка закрыть объект null:\n" + exc.toString() + "\n");
-            }
-            catch (ArrayIndexOutOfBoundsException exc) {
+            } catch (ArrayIndexOutOfBoundsException exc) {
                 System.out.println("Выход за границы массива:\n" + exc.toString() + "\n");
-            }
-            catch (IOException exc) {
+            } catch (IOException exc) {
                 System.out.println("Ошибка ввода-вывода:\n" + exc.toString() + "");
             }
         }
